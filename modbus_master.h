@@ -13,6 +13,7 @@
 #include <QDebug>
 #include <iostream>
 #include <memory>
+#include <functional>
 #include <iomanip>
 #include "modbus_settings.h"
 
@@ -20,25 +21,35 @@
 
 namespace Modbus {
 
-class Timer
+class Timer : public QObject
 {
+    Q_OBJECT
 public:
-    void timerEvent(QTimerEvent * ev)
+    typedef std::function<void()> fn_type;
+
+    void timerEvent(QTimerEvent* ev)
     {
         if (ev->timerId() == m_timer.timerId())
         {
-            startTimer();
+            start();
+            m_fn ();
         }
     }
 
-    void startTimer()
+    void start()
     {
         m_timer.setTimerType(Qt::CoarseTimer);
         m_timer.start(5000);
     }
 
+    template <typename Processor>
+    Timer (Processor fn) : m_fn (fn)
+    { }
+
 private:
-    QTimer m_timer { this };
+    QTimer  m_timer { this };
+    fn_type m_fn;
+
 };
 
 //******************************************************************//

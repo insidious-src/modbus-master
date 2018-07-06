@@ -98,6 +98,9 @@ int main(int argc, char *argv[])
     Modbus::cMaster modbusRTUMaster (false, "/home/home/Projects/Qt/modbus_master/settings.json", "modbus rtu");
     modbusRTUMaster.PrintSettings();
 
+    Modbus::cMaster modbusTCPMaster (false, "/home/home/Projects/Qt/modbus_master/settings.json", "modbus tcp");
+    modbusTCPMaster.PrintSettings();
+
 
     mqttClient.Connect();
     mqttClient.Start();
@@ -107,35 +110,47 @@ int main(int argc, char *argv[])
     {
         if(resp.dataUnit.startAddress() == 12)
             std::cout << "Act. Power: " << Floatize(resp.dataUnit.value(1), resp.dataUnit.value(0)).value << " W\n";
+        if(resp.dataUnit.startAddress() == 41197)
+            std::cout << "Percent: " << Floatize(resp.dataUnit.value(1), resp.dataUnit.value(0)).value << " %\n";
     });
 
     modbusRTUMaster.Connect();
+    modbusTCPMaster.Connect();
 
-    std::function<void()> scheduler;
+    if (modbusTCPMaster.IsConnected()) modbusTCPMaster.ReadInputRegisters(3, 41197, 2);
 
-    scheduler = [&]
+//    std::function<void()> scheduler;
+
+//    scheduler = [&]
+//    {
+//        auto time = QTime::currentTime();
+
+//        for (auto h = time.hour(); h < 24; ++h)
+//        {
+//            for (auto m = time.minute(); m < 60; ++m)
+//            {
+//                for (auto s = time.second(); s < 60; s += 5)
+//                {
+//                    time.setHMS(h, m, s);
+
+//                    Modbus::runAt(time, [&]
+//                    {
+//                        modbusRTUMaster.ReadInputRegisters(1, 12, 2);
+//                        if (QTime::currentTime() > QTime(23, 59, 55)) scheduler();
+//                    });
+//                }
+//            }
+//        }
+//    };
+
+//    scheduler();
+
+    Modbus::Timer timer([&]
     {
-        auto time = QTime::currentTime();
+        modbusRTUMaster.ReadInputRegisters(1, 12, 2);
+    });
 
-        for (auto h = time.hour(); h < 24; ++h)
-        {
-            for (auto m = time.minute(); m < 60; ++m)
-            {
-                for (auto s = time.second(); s < 60; s += 5)
-                {
-                    time.setHMS(h, m, s);
-
-                    Modbus::runAt(time, [&]
-                    {
-                        modbusRTUMaster.ReadInputRegisters(1, 12, 2);
-                        if (QTime::currentTime() > QTime(23, 59, 55)) scheduler();
-                    });
-                }
-            }
-        }
-    };
-
-    scheduler();
+    timer.start();
 
     cClient *cli = new cClient("1", &modbusRTUMaster, &mqttClient);
     cli->PrintID();
