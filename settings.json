@@ -1,0 +1,27 @@
+{
+	"mqtt": {
+		"host": "192.168.1.7",
+		"port": 1883,
+		"username": "solventer",
+		"password": "solventer",
+		"keep-alive": 60,
+		"qos pub": 1,
+		"qos sub": 1,
+		"retain": false,
+		"reconnect delay": 1
+	},
+	"modbus rtu": {
+		"port name": "/dev/ttyUSB0",
+		"baud rate": 4800,
+		"data bits": 8,
+		"stop bits": 1,
+		"parity": "even",
+		"timeout": 1000,
+		"retries": 1
+	},
+	"modbus tcp": {
+		"url": "91.92.246.39:502",
+		"timeout": 1000,
+		"retries": 3
+	}
+}
